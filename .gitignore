@@ -1,0 +1,10 @@
+# cache
+*.pyc
+.env
+uv.lock
+
+# folder
+source/
+
+# custom
+dev-*
