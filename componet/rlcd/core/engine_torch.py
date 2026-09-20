@@ -25,16 +25,6 @@ _torch_tokenizer = None
 _torch_device = None
 _gpu_lock = threading.Lock()
 
-# Support Hugging Face Spaces ZeroGPU if available
-try:
-    import spaces
-    gpu_decorator = spaces.GPU(duration=60)
-except Exception:
-    def gpu_decorator(fn=None, **kwargs):
-        if fn is not None:
-            return fn
-        return lambda f: f
-
 
 def get_torch_engine():
     global _torch_model, _torch_tokenizer, _torch_device
@@ -51,7 +41,7 @@ def get_torch_engine():
         _torch_tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
         
         load_kwargs = {
-            "torch_dtype": dtype,
+            "dtype": "auto",
             "low_cpu_mem_usage": True
         }
         if _torch_device == "cuda":
@@ -66,7 +56,6 @@ def get_torch_engine():
     return _torch_model, _torch_tokenizer, _torch_device
 
 
-@gpu_decorator
 def run_parallel_generation_torch(
     context: str,
     schema: StructuredSchema,
@@ -265,7 +254,6 @@ def run_parallel_generation_torch(
     }
 
 
-@gpu_decorator
 def run_naive_generation_torch(
     context: str,
     schema: StructuredSchema,

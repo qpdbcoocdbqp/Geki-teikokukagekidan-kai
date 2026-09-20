@@ -6,6 +6,7 @@ Serves interactive side-by-side benchmark UI, presets, and live streaming endpoi
 import os
 import json
 import asyncio
+import torch
 from typing import Dict, Any, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -47,9 +48,15 @@ class PredictRequest(BaseModel):
 
 @app.on_event("startup")
 def on_startup():
-    print("Pre-warming inference engine on Apple Silicon GPU...")
-    get_engine()
-    print("Engine ready for high-speed inference.")
+    model, tokenizer, device = get_engine()
+
+    # Run one minimal forward pass during startup so FP8 kernels are
+    # downloaded/compiled before the first user request arrives.
+    warmup_inputs = tokenizer("warmup", return_tensors="pt").to(device)
+    with torch.inference_mode():
+        model(**warmup_inputs, use_cache=False)
+
+    print("Engine and inference kernels ready for inference.")
 
 
 @app.get("/api/presets")

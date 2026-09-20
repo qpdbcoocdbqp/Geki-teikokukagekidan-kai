@@ -1,0 +1,21 @@
+{
+    "context": "{\"goal\":\"Search for OpenAI documentation\",\"page\":{\"url\":\"https://example.com\",\"title\":\"Search\",\"text\":\"Search documentation\"},\"recent_actions\":[],\"allowed_operations\":{\"CLICK\":\"Click an element\",\"TYPE_TEXT\":\"Enter text\",\"WAIT\":\"Wait\",\"DONE\":\"Task completed\",\"BLOCKED\":\"Cannot continue\"},\"allowed_targets\":{\"CLICK\":{\"1\":{\"element\":\"[1] Search button\",\"role\":\"button\"},\"2\":{\"element\":\"[2] Documentation link\",\"role\":\"link\"}},\"TYPE_TEXT\":{\"3\":{\"element\":\"[3] Search input\",\"role\":\"textbox\",\"current_value\":\"\"}}}}",
+    "schema": {
+      "operation": {
+        "type": "enum",
+        "description": "The single best next browser operation from allowed_operations in the context.",
+        "choices": ["CLICK", "TYPE_TEXT", "WAIT", "DONE", "BLOCKED"]
+      },
+      "click_target": {
+        "type": "enum",
+        "description": "The best observed target for CLICK from allowed_targets.CLICK.",
+        "choices": ["1", "2"]
+      },
+      "type_text_target": {
+        "type": "enum",
+        "description": "The best observed target for TYPE_TEXT from allowed_targets.TYPE_TEXT.",
+        "choices": ["3"]
+      }
+    },
+    "temperature": 1.0
+}
