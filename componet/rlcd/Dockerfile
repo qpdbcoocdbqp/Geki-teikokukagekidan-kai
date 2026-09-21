@@ -1,4 +1,12 @@
-FROM python:3.11-slim
+ARG UV_VERSION=0.12.1
+ARG PROJECT_DIR=rlcd
+FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
+
+FROM python:3.12-slim-bookworm
+
+COPY --from=uv /uv /uvx /bin/
+
+ARG PROJECT_DIR=rlcd
 
 # Create standard non-root user with UID 1000 for Hugging Face Spaces
 RUN useradd -m -u 1000 user
@@ -11,8 +19,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Switch to non-root user
-USER user
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH \
     PYTHONUNBUFFERED=1 \
@@ -21,12 +27,14 @@ ENV HOME=/home/user \
     MODEL_ID=Qwen/Qwen2.5-1.5B-Instruct
 
 # Install Python requirements
-COPY --chown=user requirements.txt /home/user/app/requirements.txt
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+COPY --chown=user ${PROJECT_DIR}/requirements.txt /home/user/app/requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
 
 # Copy source tree
-COPY --chown=user . /home/user/app
+COPY --chown=user ${PROJECT_DIR}/ /home/user/app
+
+# Run the application as the non-root user
+USER user
 
 EXPOSE 7860
 

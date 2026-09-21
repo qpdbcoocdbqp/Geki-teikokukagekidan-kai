@@ -32,20 +32,24 @@ Explore Jev in browser used. Playing with [檄! 帝国華撃団（改）](https:
 * [harshatheg/Qwen-2.5-1B-RLCD](https://huggingface.co/harshatheg/Qwen-2.5-1B-RLCD)
 
 
+## Setup
+
 * **browser use**
 
-  ```bash
-  # build image
-  docker build \
-    --build-arg PROJECT_DIR=componet/jevbrowser \
-    -t jev-browse:dev \
-    -f componet/jevbrowser/Dockerfile .
+  * deploy
 
-  # run browser server
-  docker run -d -p 8766:8766 \
-    --env-file .env \
-    jev-browse
-  ```
+    ```bash
+    # build image
+    docker build \
+      --build-arg PROJECT_DIR=componet/jevbrowser \
+      -t jev-browse:dev \
+      -f componet/jevbrowser/Dockerfile .
+
+    # run browser server
+    docker run -d -p 8766:8766 \
+      --env-file .env \
+      jev-browse:dev
+    ```
 
 * **RLCD**
 
@@ -53,16 +57,36 @@ Explore Jev in browser used. Playing with [檄! 帝国華撃団（改）](https:
     ```bash
     source ~/.venv/bin/activate
     # use Qwen/Qwen3-4B-Instruct-2507-FP8
-    MODEL_ID='Qwen/Qwen3-4B-Instruct-2507-FP8' python -m componet.rlcd.server.main
+    MODEL_ID='Qwen/Qwen3-4B-Instruct-2507-FP8' python -m componet.rlcd.server.main --port 7860
     ```
 
-  * client 
+  * deploy
+
+    ```bash
+    # build image
+    docker build \
+      --network=host \
+      --build-arg PROJECT_DIR=componet/rlcd \
+      -t rlcd:dev \
+      -f componet/rlcd/Dockerfile .
+
+    # run RLCD server
+    MSYS_NO_PATHCONV=1 docker run -d --gpus=all \
+      -p 7860:7860 \
+      -v "$HOME/.cache/huggingface:/home/user/.cache/huggingface" \
+      -e HF_HOME="/home/user/.cache/huggingface" \
+      -e MODEL_ID="Qwen/Qwen3-4B-Instruct-2507-FP8" \
+      rlcd:dev
+    ```
+
+  * client
+
     ```bash
     # cache server is ready
-    curl http://localhost:8000/api/presets
+    curl http://localhost:7860/api/presets
 
     # send request
-    curl -X POST http://localhost:8000/api/run-rlcd \
+    curl -X POST http://localhost:7860/api/run-rlcd \
       -H 'Content-Type: application/json' \
       --data-binary '@examples/request.json'
     ```

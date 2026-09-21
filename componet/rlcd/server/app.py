@@ -23,7 +23,14 @@ from core.engine import (
     run_rlcd_generation,
 )
 
-app = FastAPI(title="Parallel Constrained Decision Engine")
+app = FastAPI(
+    title="Parallel Constrained Decision Engine",
+    description="API for parallel constrained decoding and structured decision inference.",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -44,6 +51,11 @@ class PredictRequest(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+@app.get("/health", tags=["Health"], summary="Health check")
+def health_check():
+    return {"status": "ok"}
 
 
 @app.on_event("startup")

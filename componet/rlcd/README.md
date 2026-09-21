@@ -2,13 +2,10 @@
 language:
 - en
 license: apache-2.0
-library_name: mlx
 tags:
 - structured-generation
 - parallel-decoding
 - constrained-decoding
-- apple-silicon
-- mlx
 - classification
 - json
 pipeline_tag: text-generation
@@ -17,28 +14,15 @@ spaces:
 - drinkmoonshine/parallel-constrained-decoding
 ---
 
-# Parallel Constrained Decoding for Apple Silicon
+# Parallel Constrained Decoding
 
 [![Open in Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-sm.svg)](https://huggingface.co/spaces/drinkmoonshine/parallel-constrained-decoding)
 
 > **Live Demo**: Try the side-by-side comparison live on Hugging Face Spaces: [drinkmoonshine/parallel-constrained-decoding](https://huggingface.co/spaces/drinkmoonshine/parallel-constrained-decoding).
 
-A high-throughput inference engine for structured information extraction, decision routing, and categorical classification on Apple Silicon using MLX.
+A high-throughput inference engine for structured information extraction, decision routing, and categorical classification.
 
-Parallel Constrained Decoding evaluates multi-field JSON schemas simultaneously rather than generating tokens sequentially. On an Apple Silicon M4 Max, it delivers **5.6x to 7.0x latency reductions** compared to standard autoregressive decoding with **100% schema validity** and **calibrated field-level confidence scores**.
-
----
-
-## Performance Benchmarks (Apple Silicon M4 Max)
-
-Evaluated with `mlx-community/Qwen2.5-1.5B-Instruct-4bit` on macOS Sequoia:
-
-| Scenario | Fields | Autoregressive Baseline | Parallel Constrained | Latency Speedup | Syntax Validity |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Fintech Fraud Routing** | 4 fields | 420 ms (120 tok/s) | **75 ms** | **5.6x** | 100% guaranteed |
-| **Code Security Audit** | 4 fields | 380 ms (125 tok/s) | **68 ms** | **5.6x** | 100% guaranteed |
-| **High-Cardinality Tariff** | 1 field (255 choices) | 500 ms (118 tok/s) | **89 ms** | **5.6x** | 100% guaranteed |
-| **Enterprise Support Triage** | 28 fields | 1,900 ms (130 tok/s) | **270 ms** | **7.0x** | 100% guaranteed |
+Parallel Constrained Decoding evaluates multi-field JSON schemas simultaneously rather than generating tokens sequentially. It delivers **5.6x to 7.0x latency reductions** compared to standard autoregressive decoding with **100% schema validity** and **calibrated field-level confidence scores**.
 
 ---
 
@@ -73,7 +57,7 @@ In structured extraction and classification, field values belong to bounded cand
                      (All fields evaluated simultaneously)
 ```
 
-1. **Single Broadcast Prefill**: The context document and semantic schema descriptions are prefilled once into an MLX Key-Value (KV) cache.
+1. **Single Broadcast Prefill**: The context document and semantic schema descriptions are prefilled once into a Key-Value (KV) cache.
 2. **KV-Cache Broadcasting**: The KV-cache is broadcast across all $M$ schema fields in parallel.
 3. **Sub-Vocabulary Logit Slicing**: For each field, only candidate token IDs belonging to valid schema choices are evaluated. The remaining vocabulary is masked.
 4. **Calibrated Softmax Probabilities**: Exact normalized probabilities are calculated over the candidate slice:
@@ -87,8 +71,6 @@ In structured extraction and classification, field values belong to bounded cand
 
 ### Prerequisites
 
-- Apple Silicon Mac (M1, M2, M3, M4 series)
-- macOS 14.0 or later
 - Python 3.10+
 
 ### Setup
@@ -243,13 +225,7 @@ for event in stream_naive_generation(context, schema):
 
 The repository includes a web interface for side-by-side latency and accuracy comparison.
 
-To launch the web server:
-
-```bash
-bash run.sh
-```
-
-Or run directly with uvicorn:
+To launch the server:
 
 ```bash
 python3 -m uvicorn server.app:app --host 0.0.0.0 --port 8000

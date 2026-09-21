@@ -1,10 +1,6 @@
 """
 Unified Engine Router for Parallel Constrained Decoding.
-Automatically selects MLX backend on Apple Silicon macOS,
-or PyTorch / CUDA backend on Linux, Docker, and Hugging Face Spaces.
 """
-
-USE_MLX = False
 
 from core.engine_torch import (
     get_torch_engine as get_engine,
@@ -20,5 +16,4 @@ __all__ = [
     "run_naive_generation",
     "stream_naive_generation",
     "run_rlcd_generation",
-    "USE_MLX",
 ]

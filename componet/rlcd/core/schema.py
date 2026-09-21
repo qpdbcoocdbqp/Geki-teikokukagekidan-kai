@@ -4,6 +4,7 @@ Supports booleans and categorical enums with cardinality up to 255.
 """
 
 import math
+import numpy as np
 from typing import Dict, Any, List, Tuple, Optional
 
 
@@ -179,12 +180,8 @@ class StructuredSchema:
         max_s_len = max(suffix_lengths)
         pad_id = tokenizer.pad_token_id or 0
         padded = [s + [pad_id] * (max_s_len - len(s)) for s in suffix_tok_lists]
-        try:
-            import mlx.core as mx
-            suffixes_batch = mx.array(padded, dtype=mx.int32)
-        except Exception:
-            import numpy as np
-            suffixes_batch = np.array(padded, dtype=np.int32)
+
+        suffixes_batch = np.array(padded, dtype=np.int32)
         
         self._parallel_metadata = {
             "field_items": field_items,
