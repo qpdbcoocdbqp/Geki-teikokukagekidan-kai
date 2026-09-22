@@ -34,6 +34,14 @@ Explore Jev in browser used. Playing with [檄! 帝国華撃団（改）](https:
 
 ## Setup
 
+* **Docker Compose (Jev Browser + RLCD)**
+
+  ```bash
+  docker compose up -d
+  ```
+  * Browser API: <http://localhost:8766>
+  * RLCD API: <http://localhost:7860>
+  
 * **browser use**
 
   * deploy

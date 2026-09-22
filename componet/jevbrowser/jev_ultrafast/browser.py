@@ -12,6 +12,7 @@ from browser_harness.helpers import cdp
 # Atomically read visible content and controls, preserving actual DOM node identity.
 READ_STATE = Path(__file__).with_name("snapshot.js").read_text()
 MARKER = f"(() => {{ const state={READ_STATE}; return state?.marker ?? null; }})()"
+SCREENSHOT_TIMEOUT_SECONDS = 10
 
 class StalePage(ValueError):
     """A decision no longer refers to the observed page."""
@@ -190,5 +191,14 @@ def browser_operation(request):
         raise StalePage("Document is navigating")
     info["fingerprint"] = fingerprint(info)
     if request.get("screenshot", True):
-        info["screenshot"] = call("Page.captureScreenshot", format="jpeg", quality=72)["data"]
+        try:
+            info["screenshot"] = call(
+                "Page.captureScreenshot",
+                _response_timeout=SCREENSHOT_TIMEOUT_SECONDS,
+                format="jpeg",
+                quality=72,
+            )["data"]
+        except TimeoutError:
+            # Screenshots are inspector-only; a slow capture must not discard an executed action.
+            info["screenshot"] = ""
     return info

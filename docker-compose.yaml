@@ -1,0 +1,33 @@
+services:
+  rlcd:
+    image: rlcd:dev
+    environment:
+      HF_HOME: /home/user/.cache/huggingface
+      MODEL_ID: ${MODEL_ID:-Qwen/Qwen3-1.7B-FP8}
+    gpus: all
+    ports:
+      - "7860:7860"
+    volumes:
+      - ${HOME:-${USERPROFILE}}/.cache/huggingface:/home/user/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:7860/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 60
+      # start_period: 20m
+    restart: unless-stopped
+
+  jev-browser:
+    image: jev-browse:dev
+    env_file:
+      - .env
+    environment:
+      JEV_MODEL_PROVIDER: rlcd
+      JEV_MODEL_BASE_URL: http://rlcd:7860
+      JEV_MODEL_API_KEY: local
+    depends_on:
+      rlcd:
+        condition: service_healthy
+    ports:
+      - "8766:8766"
+    restart: unless-stopped
