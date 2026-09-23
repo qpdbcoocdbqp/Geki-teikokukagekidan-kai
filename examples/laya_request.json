@@ -1,0 +1,59 @@
+{
+  "state": {
+    "goal": "Search for OpenAI documentation",
+    "page": {
+      "url": "https://example.com",
+      "title": "Search",
+      "text": "Search documentation"
+    },
+    "recent_actions": [],
+    "allowed_operations": {
+      "CLICK": "Click an element",
+      "TYPE_TEXT": "Enter text",
+      "WAIT": "Wait",
+      "DONE": "Task completed",
+      "BLOCKED": "Cannot continue"
+    },
+    "allowed_targets": {
+      "CLICK": {
+        "1": {"element": "[1] Search button", "role": "button"},
+        "2": {"element": "[2] Documentation link", "role": "link"}
+      },
+      "TYPE_TEXT": {
+        "3": {
+          "element": "[3] Search input",
+          "role": "textbox",
+          "current_value": ""
+        }
+      }
+    }
+  },
+  "questions": {
+    "operation": {
+      "type": "choice",
+      "instructions": "Choose the single best next browser operation.",
+      "criteria": {
+        "CLICK": "Click an element",
+        "TYPE_TEXT": "Enter text",
+        "WAIT": "Wait",
+        "DONE": "Task completed",
+        "BLOCKED": "Cannot continue"
+      }
+    },
+    "click_target": {
+      "type": "choice",
+      "instructions": "If clicking, choose the best observed target.",
+      "criteria": {
+        "1": "[1] Search button",
+        "2": "[2] Documentation link"
+      }
+    },
+    "type_text_target": {
+      "type": "choice",
+      "instructions": "If typing, choose the best observed target.",
+      "criteria": {
+        "3": "[3] Search input"
+      }
+    }
+  }
+}

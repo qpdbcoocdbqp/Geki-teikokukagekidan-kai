@@ -1,5 +1,6 @@
 services:
   rlcd:
+    profiles: ["rlcd"]
     image: rlcd:dev
     environment:
       HF_HOME: /home/user/.cache/huggingface
@@ -17,16 +18,35 @@ services:
       # start_period: 20m
     restart: unless-stopped
 
+  laya:
+    image: laya:dev
+    environment:
+      HF_HOME: /home/user/.cache/huggingface
+      LAYA_MODEL_ID: ${LAYA_MODEL_ID:-convaiinnovations/laya}
+      LAYA_DEVICE: ${LAYA_DEVICE:-cuda}
+      PORT: 8000
+    gpus: all
+    ports:
+      - "7861:8000"
+    volumes:
+      - ${HOME:-${USERPROFILE}}/.cache/huggingface:/home/user/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 60
+      start_period: 10m
+    restart: unless-stopped
+
   jev-browser:
     image: jev-browse:dev
     env_file:
       - .env
     environment:
-      JEV_MODEL_PROVIDER: rlcd
-      JEV_MODEL_BASE_URL: http://rlcd:7860
-      JEV_MODEL_API_KEY: local
+      JEV_MODEL_PROVIDER: laya
+      JEV_MODEL_BASE_URL: http://laya:8000
     depends_on:
-      rlcd:
+      laya:
         condition: service_healthy
     ports:
       - "8766:8766"

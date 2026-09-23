@@ -105,6 +105,20 @@ JEV_MODEL_TIMEOUT=120
 
 `JEV_MODEL_BASE_URL` may also contain the complete `/api/run-rlcd` endpoint. `TYPE_TEXT` values still come from the separately configured `TEXT_MODEL`.
 
+To use the Laya System One API, select the `laya` provider. The base URL may
+also be the complete `/v1/systemone` or `/api/system-one` endpoint:
+
+```dotenv
+JEV_MODEL_PROVIDER=laya
+JEV_MODEL_BASE_URL=http://host.docker.internal:8000
+JEV_MODEL_TIMEOUT=120
+```
+
+Jev sends all operation and compatible target questions in one request and
+validates Laya's selected operation, target, probability distributions, and
+confidence before executing an action. `TYPE_TEXT` continues to use
+`TEXT_MODEL_*`.
+
 To submit a goal and run the agent automatically (remote providers may incur API charges):
 
 ```bash

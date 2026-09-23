@@ -16,7 +16,8 @@ def post_json(url, key, body, timeout=None):
     for attempt in range(3):
         try:
             options = {} if timeout is None else {"timeout": timeout}
-            response = CLIENT.post(url, json=body, headers={"Authorization": f"Bearer {key}"}, **options)
+            headers = {"Authorization": f"Bearer {key}"} if key else {}
+            response = CLIENT.post(url, json=body, headers=headers, **options)
         except httpx.TimeoutException:
             raise RuntimeError("Model request timed out; no action executed.") from None
         except httpx.HTTPError:
@@ -300,9 +301,9 @@ def choose(state, goal, history):
         decision = rlcd_choice(state, goal, history, operations, targets, controls)
         decision["latency_ms"] = round((time.perf_counter() - started) * 1000)
         return decision
-    if provider != "typesafe":
+    if provider not in {"typesafe", "laya"}:
         raise ValueError(
-            f"Unknown JEV_MODEL_PROVIDER {provider!r}; expected 'typesafe', 'openai', or 'rlcd'."
+            f"Unknown JEV_MODEL_PROVIDER {provider!r}; expected 'typesafe', 'openai', 'rlcd', or 'laya'."
         )
     questions = {
         "operation": {"type": "choice", "criteria": operations, "instructions": {"goal": goal, "rules": NEXT_ACTION}}
@@ -331,15 +332,33 @@ def choose(state, goal, history):
         },
         "questions": questions,
     }
-    result = post_json("https://api.typesafe.ai/v1/systemone", os.environ["TYPESAFE_API_KEY"], body)
-    operation_answer = validate_choice(result["answers"].get("operation", {}), operations)
+    if provider == "laya":
+        base = os.environ.get("JEV_MODEL_BASE_URL", "").rstrip("/")
+        if not base:
+            raise ValueError("Laya policy needs JEV_MODEL_BASE_URL; no action executed.")
+        endpoint = base if base.endswith(("/v1/systemone", "/api/system-one")) else base + "/v1/systemone"
+        key = os.environ.get("JEV_MODEL_API_KEY", "")
+        try:
+            timeout = float(os.environ.get("JEV_MODEL_TIMEOUT", "120"))
+            if timeout <= 0:
+                raise ValueError()
+        except ValueError:
+            raise ValueError("JEV_MODEL_TIMEOUT must be a positive number; no action executed.") from None
+        result = post_json(endpoint, key, {"state": body["state"], "questions": questions}, timeout=timeout)
+        source = "Laya"
+    else:
+        result = post_json("https://api.typesafe.ai/v1/systemone", os.environ["TYPESAFE_API_KEY"], body)
+        source = "TypeSafe"
+    operation_answer = validate_choice(result["answers"].get("operation", {}), operations, source=source)
     operation = operation_answer["choice"]
     target = None
     target_answer = None
     probabilities = {}
     if operation in targets:
         # Unused target heads cannot cause an action. Validate the head selected by the operation.
-        target_answer = validate_choice(result["answers"].get(operation.lower() + "_target", {}), targets[operation])
+        target_answer = validate_choice(
+            result["answers"].get(operation.lower() + "_target", {}), targets[operation], source=source
+        )
         target = target_answer["choice"]
         choice = targets[operation][target]["id"]
         probabilities = {a["id"]: target_answer["probabilities"][index] for index, a in targets[operation].items()}
