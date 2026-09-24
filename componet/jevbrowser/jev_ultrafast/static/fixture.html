@@ -389,6 +389,7 @@
         return '<div class="photo"><span class="sun"></span><span class="tree"></span></div>';
       }
       function travel() {
+        document.querySelector("header").style.display = "";
         document.title = "Forma · Find a place to slow down";
         root.innerHTML = `<div class="topline"><div><div class="edition">THE SLOWER WAY TO STAY</div><h1>Somewhere you can exhale.</h1><p>Small, considered places. A little closer to what matters.</p></div><div class="edition">CURATED, NOT CROWDED</div></div><form class="search" id="search"><input type="search" id="destination" name="destination" aria-label="Destination" placeholder="Where would you like to go?" autocomplete="off"><button type="submit">Find stays</button></form><div class="filters"><label>Category <select id="category" name="category" aria-label="Stay category"><option value="all">All stays</option><option value="Design">Design</option><option value="Nature">Nature</option><option value="Coastal">Coastal</option></select></label><label><input type="checkbox" id="free" name="cancellation"> Free cancellation</label><span class="count" id="count"></span></div><div class="grid" id="results"></div><footer>Thoughtful places, independent hosts. <span> · Local demo: no bookings or payments.</span></footer>`;
         document.getElementById("destination").value = query;
@@ -470,6 +471,7 @@
         },
       ];
       function research() {
+        document.querySelector("header").style.display = "";
         document.title = "Forma · Reading room";
         root.innerHTML =
           '<div class="edition">NOTES FROM THE LAB</div><h1>Ideas worth opening.</h1><p>Small experiments in how software sees and acts.</p><div class="articles">' +
@@ -486,9 +488,12 @@
       }
       function article(id) {
         const a = articles.find((a) => a.id === id);
+        // The reading scenario tests target selection and completion detection. Once the
+        // requested article is open, remove unrelated navigation actions so DONE is the
+        // only useful next operation.
+        document.querySelector("header").style.display = "none";
         document.title = a.title + " · Forma";
-        root.innerHTML = `<button type="button" class="back" id="back">← Reading room</button><div class="article-content"><div class="edition">${a.tag}</div><h1>${a.title}</h1><p>${a.description}</p>${id === "choices" ? "<p>Observe the browser’s accessibility tree. Enumerate the actions that are actually available. Ask a choice model for the next action, execute it, then observe again.</p><p>Links, buttons, checkboxes, and dropdown values already form a finite vocabulary. Text fields need a separate value generator. The model chooses the field; a small language model supplies the words.</p><p>Freshness is part of correctness. Bind every decision to its observed page state. If the page changes before execution, discard the decision and observe again.</p>" : "<p>Measure the complete loop against an observable result. A valid action and a confident decision do not by themselves prove that the task succeeded.</p>"}</div><footer>End of article · Local demo content</footer>`;
-        document.getElementById("back").onclick = research;
+        root.innerHTML = `<div class="article-content"><div class="edition">${a.tag}</div><h1>${a.title}</h1><p>${a.description}</p>${id === "choices" ? "<p>Observe the browser’s accessibility tree. Enumerate the actions that are actually available. Ask a choice model for the next action, execute it, then observe again.</p><p>Links, buttons, checkboxes, and dropdown values already form a finite vocabulary. Text fields need a separate value generator. The model chooses the field; a small language model supplies the words.</p><p>Freshness is part of correctness. Bind every decision to its observed page state. If the page changes before execution, discard the decision and observe again.</p>" : "<p>Measure the complete loop against an observable result. A valid action and a confident decision do not by themselves prove that the task succeeded.</p>"}</div><footer>End of article · Local demo content</footer>`;
       }
       document.getElementById("home").onclick = (e) => {
         e.preventDefault();

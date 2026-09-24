@@ -1,0 +1,8 @@
+**
+!componet/
+!componet/kev/
+!componet/kev/requirements.txt
+!componet/kev/server/
+!componet/kev/server/*.py
+!componet/kev/quant/
+!componet/kev/quant/*.py

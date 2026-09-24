@@ -1,0 +1,14 @@
+# Kev inference runtime (aligned with the upstream Kev package)
+accelerate>=1.15.0
+numpy>=2.5.3
+peft>=0.21
+torch>=2.6,<2.9
+transformers>=5.17,<6
+
+# Optional 8-bit/4-bit loading selected by KEV_QUANTIZATION
+bitsandbytes>=0.50,<0.51
+
+# API server
+fastapi>=0.115,<1
+pydantic>=2.9,<3
+uvicorn[standard]>=0.30,<1

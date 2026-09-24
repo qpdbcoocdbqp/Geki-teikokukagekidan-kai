@@ -38,15 +38,37 @@ services:
       start_period: 10m
     restart: unless-stopped
 
+  kev:
+    image: kev:dev
+    environment:
+      HF_HOME: /home/user/.cache/huggingface
+      KEV_MODEL_ID: ${KEV_MODEL_ID:-jaredpalmer/kev-4b}
+      KEV_QUANTIZATION: ${KEV_QUANTIZATION:-4bit}
+      KEV_DEVICE: ${KEV_DEVICE:-cuda}
+      PORT: 8000
+    gpus: all
+    ports:
+      - "7862:8000"
+    volumes:
+      - ${HOME:-${USERPROFILE}}/.cache/huggingface:/home/user/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 60
+      start_period: 10m
+    restart: unless-stopped
+
   jev-browser:
     image: jev-browse:dev
     env_file:
       - .env
     environment:
       JEV_MODEL_PROVIDER: laya
-      JEV_MODEL_BASE_URL: http://laya:8000
+      JEV_MODEL_BASE_URL: http://kev:8000
+      JEV_ALLOW_ARBITRARY_URLS: ${JEV_ALLOW_ARBITRARY_URLS:-0}
     depends_on:
-      laya:
+      kev:
         condition: service_healthy
     ports:
       - "8766:8766"

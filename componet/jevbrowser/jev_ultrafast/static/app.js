@@ -7,7 +7,7 @@ const goals = {
   flights: 'Find one-way flights from Zurich to London on September 20, 2026, for one adult in economy. Stop when matching flight options are visible. Do not select or book a flight.',
   travel: 'Find a Design stay in Lisbon with Free cancellation and open Casa Flora.',
   research:
-    "Open the article about using finite choices to control browser agents.",
+    'Open the article titled "A browser is a choice, not a conversation". Stop as soon as the full article page with that title is visible; then choose DONE.',
 };
 const escape = (value) =>
   String(value ?? "").replace(

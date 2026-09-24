@@ -1,6 +1,6 @@
 import pytest
 
-from jev_ultrafast import model
+from jev_ultrafast import demo, model
 
 
 def test_laya_provider_posts_system_one_request(monkeypatch):
@@ -64,3 +64,45 @@ def test_laya_provider_rejects_invalid_timeout(monkeypatch, value):
             "Wait once",
             [],
         )
+def test_wikipedia_scenario_uses_public_main_page():
+    assert demo.scenario_url("wikipedia") == "https://en.wikipedia.org/wiki/Main_Page"
+
+
+def test_unknown_demo_scenario_is_rejected():
+    with pytest.raises(ValueError, match="Unknown demo scenario"):
+        demo.scenario_url("unknown")
+
+
+def test_arbitrary_url_requires_explicit_opt_in(monkeypatch):
+    monkeypatch.delenv("JEV_ALLOW_ARBITRARY_URLS", raising=False)
+
+    with pytest.raises(ValueError, match="JEV_ALLOW_ARBITRARY_URLS=1"):
+        demo.start_url({"url": "https://en.wikipedia.org/wiki/Main_Page"})
+
+
+def test_arbitrary_url_accepts_public_https_when_enabled(monkeypatch):
+    monkeypatch.setenv("JEV_ALLOW_ARBITRARY_URLS", "1")
+    monkeypatch.setattr(
+        demo.socket,
+        "getaddrinfo",
+        lambda *_args, **_kwargs: [(demo.socket.AF_INET, demo.socket.SOCK_STREAM, 6, "", ("208.80.154.224", 443))],
+    )
+
+    url = "https://en.wikipedia.org/wiki/Main_Page"
+    assert demo.start_url({"url": url}) == url
+
+
+@pytest.mark.parametrize(
+    "url, message",
+    [
+        ("http://en.wikipedia.org/wiki/Main_Page", "absolute HTTPS"),
+        ("https://user:password@example.com/", "credentials"),
+        ("https://127.0.0.1/", "public IP"),
+        ("https://169.254.169.254/", "public IP"),
+    ],
+)
+def test_arbitrary_url_rejects_unsafe_targets(monkeypatch, url, message):
+    monkeypatch.setenv("JEV_ALLOW_ARBITRARY_URLS", "1")
+
+    with pytest.raises(ValueError, match=message):
+        demo.start_url({"url": url})

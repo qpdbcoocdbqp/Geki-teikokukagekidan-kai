@@ -92,6 +92,13 @@ JEV_MODEL=local-model
 JEV_MODEL_TIMEOUT=120
 ```
 
+The inspector accepts caller-provided start URLs only when explicitly enabled. Arbitrary targets must be HTTPS,
+must not contain credentials, and must resolve exclusively to public IP addresses:
+
+```dotenv
+JEV_ALLOW_ARBITRARY_URLS=1
+```
+
 `JEV_MODEL_*` falls back to the corresponding `TEXT_MODEL_*` value when omitted, so one local model can serve both browser decisions and generated field text. The local policy must support JSON response format. Its operation and target are checked against the current observed action space before anything executes. TypeSafe remains the default provider.
 
 To use an RLCD server for browser decisions, point the policy at the server origin. Jev posts the current goal, page, action history, and dynamic enum schema to `/api/run-rlcd` and validates the returned full probability distributions before executing anything:

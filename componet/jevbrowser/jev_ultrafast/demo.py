@@ -1,9 +1,11 @@
 """Loopback-only inspector for the Jev browser agent."""
 
 import atexit
+import ipaddress
 import json
 import os
 import secrets
+import socket
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -19,6 +21,48 @@ ORIGIN = f"http://127.0.0.1:{PORT}"
 TOKEN = secrets.token_urlsafe(32)
 LOCK = threading.Lock()
 AGENT = None
+
+
+def scenario_url(scenario):
+    urls = {
+        "flights": "https://www.google.com/travel/flights?hl=en",
+        "travel": f"{ORIGIN}/fixture.html?scenario=travel",
+        "research": f"{ORIGIN}/fixture.html?scenario=research",
+        "wikipedia": "https://en.wikipedia.org/wiki/Main_Page",
+    }
+    try:
+        return urls[scenario]
+    except KeyError:
+        raise ValueError("Unknown demo scenario") from None
+
+
+def arbitrary_url(value):
+    if os.environ.get("JEV_ALLOW_ARBITRARY_URLS") != "1":
+        raise ValueError("Arbitrary URLs are disabled; set JEV_ALLOW_ARBITRARY_URLS=1")
+    if not isinstance(value, str) or not value.strip() or len(value) > 2000:
+        raise ValueError("Enter a URL containing 1–2,000 characters")
+    value = value.strip()
+    parsed = urlparse(value)
+    if parsed.scheme != "https" or not parsed.hostname:
+        raise ValueError("Arbitrary URLs must be absolute HTTPS URLs")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("Arbitrary URLs cannot contain credentials")
+    try:
+        addresses = {
+            item[4][0].split("%", 1)[0]
+            for item in socket.getaddrinfo(parsed.hostname, parsed.port or 443, type=socket.SOCK_STREAM)
+        }
+        if not addresses or any(not ipaddress.ip_address(address).is_global for address in addresses):
+            raise ValueError("Arbitrary URLs must resolve only to public IP addresses")
+    except (OSError, UnicodeError, ValueError) as error:
+        if isinstance(error, ValueError) and str(error).startswith("Arbitrary URLs"):
+            raise
+        raise ValueError("Arbitrary URL hostname could not be resolved") from None
+    return value
+
+
+def start_url(body):
+    return arbitrary_url(body["url"]) if "url" in body else scenario_url(body.get("scenario", "flights"))
 
 
 def load_environment():
@@ -46,21 +90,18 @@ def command(name, body):
     global AGENT
     if name == "reset":
         scenario = body.get("scenario", "flights")
-        if scenario not in {"travel", "research", "flights"}:
-            raise ValueError("Unknown demo scenario")
+        url = start_url(body)
         goal = body.get("goal", "").strip()
         if not goal or len(goal) > 2000:
             raise ValueError("Enter 1–2,000 characters")
         close_browser()
         AGENT = Agent(
-            "https://www.google.com/travel/flights?hl=en"
-            if scenario == "flights"
-            else f"{ORIGIN}/fixture.html?scenario={scenario}",
+            url,
             goal,
             screenshots=True,
             record_dir=Path.cwd() / "artifacts" / "frames" if body.get("record") else None,
         )
-        AGENT.state["scenario"] = scenario
+        AGENT.state["scenario"] = "arbitrary" if "url" in body else scenario
     else:
         if AGENT is None:
             raise ValueError("Start a demo first")
