@@ -87,6 +87,20 @@ def decision_summary(decision):
     }
 
 
+def print_tick_result(state, previous_actions, tick_number, decision):
+    history = state.get("history", [])
+    if len(history) > previous_actions:
+        for action in history[previous_actions:]:
+            print(f"[action {action['step']:02d}] {state['status']}: {action['action']}")
+        return
+    if state["status"] in {"done", "blocked"}:
+        choice = decision.get("choice", state["status"].upper()) if decision else state["status"].upper()
+        print(f"[terminal] {state['status']}: {choice} ({len(history)} browser actions)")
+        return
+    choice = decision.get("choice", "decision") if decision else "decision"
+    print(f"[tick {tick_number:02d}] {state['status']}: {choice} not executed; page changed and was re-observed")
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--service-url", default="http://127.0.0.1:8766", help="jev-browser service URL")
@@ -108,22 +122,20 @@ def main():
         print("Browser ready:", json.dumps(page_summary(state), ensure_ascii=False))
 
         logged_decisions = 0
-        for _ in range(state["max_steps"] * 2):
+        for tick_number in range(1, state["max_steps"] * 2 + 1):
             if state["status"] in {"done", "blocked"}:
                 break
+            previous_actions = len(state.get("history", []))
             state = client.post("tick", {})
             decisions = state.get("decisions", [])
-            for index, decision in enumerate(decisions[logged_decisions:], start=logged_decisions + 1):
+            new_decisions = decisions[logged_decisions:]
+            for index, decision in enumerate(new_decisions, start=logged_decisions + 1):
                 print(
                     f"[model {index:02d}] "
                     + json.dumps(decision_summary(decision), ensure_ascii=False, sort_keys=True)
                 )
             logged_decisions = len(decisions)
-            last = state.get("history", [])[-1:] or [{}]
-            print(
-                f"[{len(state.get('history', [])):02d}] {state['status']}: "
-                f"{last[0].get('action', 'choosing next action')}"
-            )
+            print_tick_result(state, previous_actions, tick_number, new_decisions[-1] if new_decisions else None)
 
         print("Final:", json.dumps(page_summary(state), ensure_ascii=False))
         return 0 if state["status"] == "done" else 1
